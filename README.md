@@ -28,7 +28,7 @@ Les automations :
 
 ## Installation
 
-1. Installer les dépendances PHP :
+Installer les dépendances PHP :
 
 ```bash
 composer install
@@ -43,7 +43,7 @@ composer require guzzlehttp/guzzle
 composer require vlucas/phpdotenv
 ```
 
-2. Renseigner la configuration SMTP dans le repository :
+Renseigner la configuration SMTP dans le repository :
 
 Fichier : `config/smtp.php`
 
