@@ -6,7 +6,6 @@ Site one page et mobile first pour un mariage.
 
 - HTML / SCSS / CSS / JS / PHP
 - Pico CSS (CDN)
-- fullPage.js (CDN)
 - PHPMailer (Composer)
 
 Pour les datas :

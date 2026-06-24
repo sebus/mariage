@@ -1,6 +1,6 @@
 {
   "name": "mariage/one-page",
-  "description": "One page mariage avec Pico CSS, fullPage.js et PHPMailer",
+  "description": "One page mariage avec Pico CSS et PHPMailer",
   "type": "project",
   "require": {
     "phpmailer/phpmailer": "^6.10",

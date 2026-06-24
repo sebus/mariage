@@ -1,10 +1,3 @@
 document.addEventListener("DOMContentLoaded", function () {
-  new fullpage("#fullpage", {
-    licenseKey: "gplv3-license",
-    autoScrolling: true,
-    navigation: true,
-    anchors: ["accueil", "infos", "contact"],
-    scrollingSpeed: 700,
-    responsiveWidth: 768,
-  });
+  // Point d'initialisation JS pour la one-page.
 });
