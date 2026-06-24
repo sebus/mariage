@@ -6,7 +6,6 @@ body {
 .hero {
   text-align: center;
 }
-
 .hero h1 {
   margin-bottom: 0.5rem;
 }
@@ -17,7 +16,6 @@ body {
   justify-content: center;
   padding: 2rem 1rem;
 }
-
 .section .container {
   width: min(720px, 100%);
   background: #ffffff;
@@ -27,8 +25,8 @@ body {
   box-shadow: 0 10px 28px rgba(0, 0, 0, 0.06);
 }
 
-a[role="button"],
+a[role=button],
 button {
   background-color: #c17c4a;
   border-color: #c17c4a;
-}
+}/*# sourceMappingURL=style.css.map */

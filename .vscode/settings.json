@@ -1,0 +1,11 @@
+{
+  "liveSassCompile.settings.forceBaseDirectory": "/assets/scss",
+  "liveSassCompile.settings.formats": [
+    {
+      "format": "expanded",
+      "extensionName": ".css",
+      "savePath": "/assets/css"
+    }
+  ],
+  "editor.fontSize": 12
+}
