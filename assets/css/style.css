@@ -1,16 +1,1 @@
-.hero {
-  text-align: center;
-}
-.hero h1 {
-  margin-bottom: 0.5rem;
-}
-
-.section {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 2rem 1rem;
-}
-.section .container {
-  width: min(720px, 100%);
-}/*# sourceMappingURL=style.css.map */
+h1{margin-bottom:.5rem}h3:last-child{margin-bottom:0}.section{min-height:100dvh;display:flex;align-items:center;justify-content:center}.section .container{width:min(720px,100%);display:flex;flex-direction:column;gap:2rem}.section.hero{text-align:center}ul.nav{list-style:none;padding:0;margin:0;display:grid;grid-template-columns:repeat(2, 1fr);gap:.75rem}ul.nav li{border:1px dotted #aaa;list-style:none}ul.nav li::before,ul.nav li::marker{display:none}ul.nav li{display:flex;justify-content:center;align-items:center}ul.nav li a{display:flex;align-items:center;justify-content:center;width:100%;height:100%;text-align:center;text-decoration:none;line-height:normal;padding:1rem;background-color:#f0f8ff}/*# sourceMappingURL=style.css.map */
