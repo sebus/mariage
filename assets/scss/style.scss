@@ -28,6 +28,89 @@ h3:last-child {
   text-align: center;
 }
 
+.site-nav {
+  position: relative;
+}
+
+.menu-toggle {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.menu-button,
+.menu-overlay {
+  display: none;
+}
+
+.site-nav.is-compact {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  z-index: 1000;
+  background-color: aliceblue;
+
+  .nav-inline {
+    display: none;
+  }
+
+  .menu-button {
+    width: 2.5rem;
+    height: 2.5rem;
+    border: 1px solid currentColor;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 0.3rem;
+    padding: 0 0.45rem;
+    cursor: pointer;
+
+    span {
+      display: block;
+      width: 100%;
+      height: 2px;
+      background: currentColor;
+    }
+  }
+
+  .menu-toggle:checked + .menu-button + .menu-overlay {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100dvh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    background-color: white;
+  }
+
+  .menu-close {
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+    border: 1px solid currentColor;
+    padding: 0.5rem 0.75rem;
+    cursor: pointer;
+    background-color: aliceblue;
+  }
+
+  .nav-overlay {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1rem;
+    width: min(720px, 100vw);
+    padding: 0 1rem;
+    box-sizing: border-box;
+
+    li {
+      border: 0;
+      width: 100%;
+    }
+  }
+}
+
 ul.nav {
   list-style: none;
   padding: 0;
@@ -39,6 +122,9 @@ ul.nav {
 
   li {
     border: 1px dotted #aaa;
+    justify-self: stretch;
+    align-self: stretch;
+    padding: 0;
 
     list-style: none;
     &::before,
@@ -59,9 +145,17 @@ ul.nav {
       text-align: center;
       text-decoration: none;
       line-height: normal;
-      padding: 1rem;
+      padding: 2rem;
 
       background-color: aliceblue;
     }
   }
+}
+
+/* Formulaire */
+.split {
+  display: flex;
+  flex-direction: row;
+  gap: 2rem;
+  margin-top: calc(var(--pico-spacing) * 0.25);
 }
