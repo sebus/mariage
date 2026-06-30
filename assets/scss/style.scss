@@ -1,3 +1,13 @@
+html {
+  scroll-behavior: smooth;
+}
+
+*,
+*::after,
+*::before {
+  box-sizing: border-box;
+}
+
 h1 {
   margin-bottom: 0.5rem;
 }
@@ -7,20 +17,15 @@ h3:last-child {
 
 .section {
   min-height: 100dvh;
-
   display: flex;
   align-items: center;
   justify-content: center;
-
-  //border: 1px dotted #aaa;
 
   .container {
     width: min(720px, 100%);
     display: flex;
     flex-direction: column;
     gap: 2rem;
-
-    //border: 1px dotted red;
   }
 }
 
@@ -33,7 +38,12 @@ h3:last-child {
 }
 
 .menu-toggle {
-  position: absolute;
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  width: 1px;
+  height: 1px;
+  margin: 0;
   opacity: 0;
   pointer-events: none;
 }
@@ -44,17 +54,17 @@ h3:last-child {
 }
 
 .site-nav.is-compact {
-  position: fixed;
-  top: 1rem;
-  right: 1rem;
-  z-index: 1000;
-  background-color: aliceblue;
-
   .nav-inline {
     display: none;
   }
+}
 
+body.nav-is-compact {
   .menu-button {
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+    background-color: aliceblue;
     width: 2.5rem;
     height: 2.5rem;
     border: 1px solid currentColor;
@@ -76,12 +86,12 @@ h3:last-child {
   .menu-toggle:checked + .menu-button + .menu-overlay {
     position: fixed;
     inset: 0;
+    z-index: 999;
     width: 100%;
     height: 100dvh;
     display: flex;
     justify-content: center;
     align-items: center;
-
     background-color: white;
   }
 
@@ -114,40 +124,33 @@ h3:last-child {
 ul.nav {
   list-style: none;
   padding: 0;
-  margin: 0;
+  margin: 0 !important;
+  width: 100%;
 
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 0.75rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
 
   li {
-    border: 1px dotted #aaa;
-    justify-self: stretch;
-    align-self: stretch;
-    padding: 0;
-
     list-style: none;
+    border: 1px dotted #aaa;
+    background-color: aliceblue;
+    padding: 1rem;
+    min-height: 80px;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    a {
+      display: block;
+      padding: 0;
+      margin: 0;
+    }
+
     &::before,
     &::marker {
       display: none;
-    }
-
-    display: flex;
-    justify-content: center;
-    align-items: center;
-
-    a {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: 100%;
-      height: 100%;
-      text-align: center;
-      text-decoration: none;
-      line-height: normal;
-      padding: 2rem;
-
-      background-color: aliceblue;
     }
   }
 }

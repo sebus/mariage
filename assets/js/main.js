@@ -2,8 +2,9 @@ document.addEventListener("DOMContentLoaded", function () {
   var accueil = document.getElementById("accueil");
   var nav = document.querySelector(".site-nav");
   var menuToggle = document.getElementById("menu-toggle");
+  var body = document.body;
 
-  if (!accueil || !nav || !menuToggle) {
+  if (!accueil || !nav || !menuToggle || !body) {
     return;
   }
 
@@ -12,6 +13,7 @@ document.addEventListener("DOMContentLoaded", function () {
     var shouldCompact = window.scrollY >= accueilBottom;
 
     nav.classList.toggle("is-compact", shouldCompact);
+    body.classList.toggle("nav-is-compact", shouldCompact);
 
     if (!shouldCompact) {
       menuToggle.checked = false;
@@ -21,9 +23,9 @@ document.addEventListener("DOMContentLoaded", function () {
   window.addEventListener("scroll", updateMenuMode, { passive: true });
   window.addEventListener("resize", updateMenuMode);
 
-  nav.addEventListener("click", function (event) {
+  document.addEventListener("click", function (event) {
     var target = event.target;
-    if (target && target.matches(".nav-overlay a")) {
+    if (target && target.closest(".nav-overlay a")) {
       menuToggle.checked = false;
     }
   });

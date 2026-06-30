@@ -12,13 +12,33 @@
 </head>
 
 <body>
+    <input class="menu-toggle" type="checkbox" id="menu-toggle">
+    <label class="menu-button" for="menu-toggle" aria-label="Ouvrir le menu">
+        <span></span>
+        <span></span>
+        <span></span>
+    </label>
+
+    <!--Menu mobile -->
+    <div class="menu-overlay">
+        <label class="menu-close" for="menu-toggle">Fermer</label>
+        <ul class="nav nav-overlay">
+            <li><a href="#programme">Programme de la journée</a></li>
+            <li><a href="#rsvp">Confirmez votre venue !</a></li>
+            <li><a href="#menu">Menu du samedi soir</a></li>
+            <li><a href="#infos">Informations pratiques, adresses...</a></li>
+            <li><a href="#contact">Contactez-nous !</a></li>
+            <li><a href="#accueil">Photos</a></li>
+        </ul>
+    </div>
+
     <main id="page">
 
         <section class="section hero" id="accueil">
             <div class="container">
                 <div class="row">
                     <div class="col">
-                        <p>Bonjour Maria & Dino !</p>
+                        <p><strong>Bonjour Maria & Dino !</strong></p>
                         <p>Bérénice, Vadim et Milan sont heureux de vous inviter au mariage de leurs parents :</p>
                         <h1>Béatrice & Sébastien</h1>
                         <h3>Samedi 24 avril 2027</h3>
@@ -27,25 +47,6 @@
                 <div class="row">
                     <div class="col">
                         <nav class="site-nav" aria-label="Navigation principale">
-                            <input class="menu-toggle" type="checkbox" id="menu-toggle">
-                            <label class="menu-button" for="menu-toggle" aria-label="Ouvrir le menu">
-                                <span></span>
-                                <span></span>
-                                <span></span>
-                            </label>
-
-                            <div class="menu-overlay">
-                                <label class="menu-close" for="menu-toggle">Fermer</label>
-                                <ul class="nav nav-overlay">
-                                    <li><a href="#programme">Programme de la journée</a></li>
-                                    <li><a href="#rsvp">Confirmez votre venue !</a></li>
-                                    <li><a href="#menu">Menu du samedi soir</a></li>
-                                    <li><a href="#infos">Informations pratiques, adresses...</a></li>
-                                    <li><a href="#contact">Contactez-nous !</a></li>
-                                    <li><a href="#accueil">Photos</a></li>
-                                </ul>
-                            </div>
-
                             <ul class="nav nav-inline">
                                 <li><a href="#programme">Programme de la journée </a></li>
                                 <li><a href="#rsvp">Confirmez votre venue !</a></li>
@@ -179,7 +180,8 @@
                                     </label>
 
                                 </fieldset>
-                                <input type="submit" value="Envoyez !" />
+                                <input type="submit" value="C'est tout bon ? Envoyez !" />
+                                <p>Astuce : vous pourrez modifier vos choix jusqu'au ...</p>
                             </form>
                         </div>
                     </div>
