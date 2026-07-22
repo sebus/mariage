@@ -3,11 +3,11 @@
 declare(strict_types=1);
 
 return [
-    'smtp_host' => 'smtp.example.com',
-    'smtp_port' => 587,
-    'smtp_user' => 'user@example.com',
-    'smtp_pass' => 'votre_mot_de_passe',
-    'mail_from' => 'user@example.com',
+    'smtp_host' => 'boeuf.o2switch.net',
+    'smtp_port' => 465,
+    'smtp_user' => 'contact@symbios.dev',
+    'smtp_pass' => 'jEjpAHAgeiyKa9RLAG',
+    'mail_from' => 'contact@symbios.dev',
     'mail_from_name' => 'Site Mariage',
-    'mail_to' => 'contact@example.com',
+    'mail_to' => 'seb.collet@gmail.com',
 ];

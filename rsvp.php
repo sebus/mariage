@@ -1,9 +1,15 @@
 <?php
-// Récupérer le code depuis l'URL
-$code = isset($_GET['code']) ? trim((string) $_GET['code']) : '';
+// Démarrer la session
+session_start();
+
+// Récupérer le code depuis l'URL ou la session
+$code = isset($_GET['code']) ? trim((string) $_GET['code']) : (isset($_SESSION['family_code']) ? $_SESSION['family_code'] : '');
 $familyData = null;
 
 if ($code) {
+    // Stocker le code en session pour les appels ultérieurs
+    $_SESSION['family_code'] = $code;
+    
     // Charger l'autoloader Composer
     $autoloadPath = __DIR__ . '/vendor/autoload.php';
     if (file_exists($autoloadPath)) {
@@ -81,6 +87,19 @@ if (!$code || !$familyData) {
 <body>
 
     <main id="page">
+
+        <!-- Popovers de feedback -->
+        <div id="form-loading" popover>
+            Enregistrement en cours...
+        </div>
+        <div id="form-success" popover>
+            ✓ Vos réponses ont été enregistrées avec succès !<br>
+            <small>La page va se recharger dans 2 secondes...</small><br>
+            <a href="#" id="manual-reload" style="font-size: 0.9em; margin-top: 0.5rem; display: inline-block;">Recharger maintenant</a>
+        </div>
+        <div id="form-error" popover>
+            ✗ Erreur lors de l'enregistrement. Veuillez réessayer.
+        </div>
 
         <section class="section hero" id="accueil">
             <div class="container">
@@ -160,7 +179,6 @@ if (!$code || !$familyData) {
                             
                             <?php if ($confirmation === null): ?>
                             <form id="confirmation-form" name="confirmation">
-                                <input type="hidden" name="code" value="<?php echo $code ? htmlspecialchars($code) : ''; ?>">
                                 <fieldset>
                                     <label for="presence"><strong>Viendrez vous à notre mariage ?</strong>
                                         <div class="split">
@@ -174,61 +192,128 @@ if (!$code || !$familyData) {
                             <!-- Formulaire détaillé (affiche seulement si confirmation = 1) -->
                             <?php elseif ($confirmation === 1): ?>
                             <form id="details-form" name="confirmationDetail">
-                                <input type="hidden" name="code" value="<?php echo $code ? htmlspecialchars($code) : ''; ?>">
                                 <fieldset>
-                                    <label for="noms"><strong>Super ! Qui vient ?</strong>
+                                    <label for="noms"><strong>Famille</strong>
                                         <input name="noms" type="text" value="<?php echo $familyData ? htmlspecialchars($familyData['famille'] ?? '') : ''; ?>" required>
                                     </label>
                                 </fieldset>
 
                                 <fieldset>
-                                    <label for="nbre_personne"><strong>Pour être certain, cela fait combien de personnes ?</strong>
-                                        <input name="nbre_personne" type="number" value="<?php echo $familyData ? htmlspecialchars($familyData['adulte'] ?? '') : ''; ?>" required>
-                                    </label>
+                                    <label for="nbre_personne"><strong>Confirmez les invités</strong></label>
+                                    <?php
+                                    if (isset($familyData['invites']) && !empty($familyData['invites'])) {
+                                        $invites = json_decode($familyData['invites'], true);
+                                        
+                                        if (is_array($invites)) {
+                                            foreach ($invites as $index => $invite) {
+                                                if (is_array($invite) && isset($invite['prenom'])) {
+                                                    $prenom = htmlspecialchars($invite['prenom']);
+                                                    $statut = $invite['statut'] ?? 'attente';
+                                                    // Pré-cocher si statut = 'confirme'
+                                                    $checked = ($statut === 'confirme') ? 'checked' : '';
+                                                    $checkboxId = 'invite_' . $index;
+                                                    ?>
+                                                    <label for="<?php echo $checkboxId; ?>" style="margin-top: 8px;">
+                                                        <input type="checkbox" id="<?php echo $checkboxId; ?>" name="invites[]" value="<?php echo $prenom; ?>" <?php echo $checked; ?>>
+                                                        <?php echo $prenom; ?>
+                                                    </label>
+                                                    <?php
+                                                }
+                                            }
+                                        }
+                                    }
+                                    ?>
                                 </fieldset>
 
                                 <fieldset>
-                                    <label for="email"><strong>Un email pour la famille</strong>
+                                    <label for="email"><strong>Un email pour recevoir les informations</strong>
                                         <input type="email" name="email" value="<?php echo $familyData ? htmlspecialchars($familyData['email'] ?? '') : ''; ?>" placeholder="Votre adresse email" autocomplete="email" required>
-                                        Saisissez le une seconde fois :
-                                        <input type="email" name="email_confirm" placeholder="Votre adresse email" autocomplete="email" required>
+                                        
                                     </label>
                                 </fieldset>
 
                                 <fieldset>
-                                    <legend><strong>Confirmez vos choix</strong></legend>
+                                    <legend><strong>Vous venez pour ...</strong></legend>
+                                    <?php
+                                    $categorie = $familyData['categorie'] ?? '';
+                                    
+                                    // Si categorie est un objet/array, extraire la valeur
+                                    if (is_array($categorie)) {
+                                        $categorie = $categorie['value'] ?? '';
+                                    } elseif (is_object($categorie)) {
+                                        $categorie = $categorie->value ?? '';
+                                    }
+
+                                    // Récupérer les choix actuels
+                                    $choixActuels = [];
+                                    if (isset($familyData['choix']) && !empty($familyData['choix'])) {
+                                        if (is_array($familyData['choix'])) {
+                                            foreach ($familyData['choix'] as $choix) {
+                                                // Baserow retourne: {id, value, color}
+                                                if (is_array($choix) && isset($choix['value'])) {
+                                                    $choixActuels[] = $choix['value'];
+                                                } elseif (is_object($choix) && isset($choix->value)) {
+                                                    $choixActuels[] = $choix->value;
+                                                } elseif (is_string($choix)) {
+                                                    // Si c'est déjà une string, la prendre directement
+                                                    $choixActuels[] = $choix;
+                                                }
+                                            }
+                                        }
+                                    }
+                                    $checkedCeremonie = in_array('ceremonie', $choixActuels) ? 'checked' : '';
+                                    $checkedVh = in_array('vinHonneur', $choixActuels) ? 'checked' : '';
+                                    $checkedRepas = in_array('repas', $choixActuels) ? 'checked' : '';
+                                    ?>
                                     <label for="select_ceremonie">
-                                        <input name="select_ceremonie" type="checkbox" role="switch" checked />
-                                        Cérémonie
+                                        <input type="checkbox" id="select_ceremonie" name="select_ceremonie" <?php echo $checkedCeremonie; ?> />
+                                        La cérémonie
                                     </label>
                                     <label for="select_vh">
-                                        <input name="select_vh" type="checkbox" role="switch" /> Vin d'honneur
+                                        <input type="checkbox" id="select_vh" name="select_vh" <?php echo $checkedVh; ?> /> 
+                                        Le Vin d'honneur
                                     </label>
+                                    <?php if ($categorie === 'full'): ?>
                                     <label for="select_repas">
-                                        <input name="select_repas" type="checkbox" role="switch" /> Repas et soirée
+                                        <input type="checkbox" id="select_repas" name="select_repas" <?php echo $checkedRepas; ?> /> 
+                                        Le Repas et soirée
                                     </label>
+                                    <?php endif; ?>
                                 </fieldset>
 
                                 <fieldset>
-                                    <label for="choix_nuit"><strong>Pensez-vous rester sur place pour la nuit</strong> ?
-                                        Si oui, nous reviendrons vers vous pour des propositions de logement.
-                                        <select name="choix_nuit" required>
-                                            <option selected disabled value="">Votre choix pour la nuit</option>
-                                            <option>Oui j'aimerais rester</option>
-                                            <option>Non je rentrerai apès la soirée</option>
-                                        </select>
+                                    <legend><strong>Pensez-vous rester sur place pour la nuit</strong> ?<br>
+                                        Si oui, nous reviendrons vers vous pour des propositions de logement.</legend>
+                                    <?php
+                                    $nuit = isset($familyData['nuit']) ? $familyData['nuit'] : null;
+                                    $checkedOui = (!is_null($nuit) && ($nuit === true || $nuit === 1)) ? 'checked' : '';
+                                    $checkedNon = (!is_null($nuit) && ($nuit === false || $nuit === 0)) ? 'checked' : '';
+                                    ?>
+                                    <label for="nuit_oui">
+                                        <input type="radio" id="nuit_oui" name="choix_nuit" value="Oui j'aimerais rester" <?php echo $checkedOui; ?> required />
+                                        Oui j'aimerais rester
+                                    </label>
+                                    <label for="nuit_non">
+                                        <input type="radio" id="nuit_non" name="choix_nuit" value="Non je rentrerai directement après la soirée" <?php echo $checkedNon; ?> required />
+                                        Non je rentrerai directement après la soirée
                                     </label>
                                 </fieldset>
 
                                 <fieldset>
                                     <label for="consignes"><strong>Avez-vous des impératifs pour le repas, allergie, menu végétarien, etc ?</strong>
-                                        <textarea name="consignes"></textarea>
+                                        <textarea name="consignes"><?php echo $familyData ? htmlspecialchars($familyData['consignes'] ?? '') : ''; ?></textarea>
                                     </label>
                                 </fieldset>
 
                                 <fieldset>
-                                    <label for="dance"><strong>Et enfin, quel morceau vous fait danser sur la piste ?</strong>
-                                        <input type="text" name="dance">
+                                    <label for="dance"><strong>Et enfin, quelle musique vous fait danser sur la piste ?</strong>
+                                        <input type="text" name="dance" value="<?php echo $familyData ? htmlspecialchars($familyData['musique'] ?? '') : ''; ?>">
+                                    </label>
+                                </fieldset>
+
+                                <fieldset>
+                                    <label for="commentaire"><strong>Un dernier commentaire ?</strong>
+                                        <textarea name="commentaire" placeholder="Vos commentaires, suggestions..."></textarea>
                                     </label>
                                 </fieldset>
 
@@ -238,7 +323,6 @@ if (!$code || !$familyData) {
 
                             <!-- Message si confirmation = false -->
                             <?php else: ?>
-                            <input type="hidden" name="code" value="<?php echo $code ? htmlspecialchars($code) : ''; ?>">
                             <fieldset>
                                 <label for="presence_non"><strong>Snif :(</strong> Vous allez nous manquer...</label>
                                 <p style="margin-top: 1rem;">
@@ -287,6 +371,65 @@ if (!$code || !$familyData) {
     <script src="assets/js/main.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function () {
+            // Récupérer les éléments popover
+            const formLoading = document.getElementById('form-loading');
+            const formSuccess = document.getElementById('form-success');
+            const formError = document.getElementById('form-error');
+
+            // Gérer le submit du formulaire détaillé
+            const detailsForm = document.getElementById('details-form');
+            if (detailsForm) {
+                console.log('✓ Formulaire détaillé trouvé');
+                detailsForm.addEventListener('submit', async function (e) {
+                    e.preventDefault();
+                    console.log('✓ Submit intercepté');
+
+                    // Afficher le loading
+                    formLoading.showPopover();
+
+                    // Préparer les données
+                    const formData = new FormData(detailsForm);
+                    console.log('FormData:', Object.fromEntries(formData));
+
+                    try {
+                        const response = await fetch('php/save-details-rsvp.php', {
+                            method: 'POST',
+                            body: formData,
+                        });
+
+                        console.log('Response status:', response.status);
+                        const result = await response.json();
+                        console.log('Response JSON:', result);
+
+                        formLoading.hidePopover();
+
+                        if (result.ok) {
+                            formSuccess.showPopover();
+                            // Recharger la page après 2 secondes
+                            setTimeout(() => {
+                                formSuccess.hidePopover();
+                                window.location.reload();
+                            }, 2000);
+                        } else {
+                            console.error('Erreur API:', result.message);
+                            formError.showPopover();
+                            setTimeout(() => {
+                                formError.hidePopover();
+                            }, 3000);
+                        }
+                    } catch (error) {
+                        console.error('Erreur fetch:', error);
+                        formLoading.hidePopover();
+                        formError.showPopover();
+                        setTimeout(() => {
+                            formError.hidePopover();
+                        }, 3000);
+                    }
+                });
+            } else {
+                console.log('✗ Formulaire détaillé NOT trouvé');
+            }
+
             // Gérer les clics sur les boutons Oui/Non
             const confirmButtons = document.querySelectorAll('.btn-confirm');
             confirmButtons.forEach(button => {
@@ -294,11 +437,9 @@ if (!$code || !$familyData) {
                     e.preventDefault();
                     
                     const confirmation = this.dataset.confirm === 'true';
-                    const code = document.querySelector('input[name="code"]').value;
                     
-                    // Préparer les données
+                    // Préparer les données (sans code, il vient de la session)
                     const formData = new FormData();
-                    formData.append('code', code);
                     formData.append('confirmation', confirmation ? '1' : '0');
                     
                     try {
@@ -327,17 +468,8 @@ if (!$code || !$familyData) {
                 resetLink.addEventListener('click', async function (e) {
                     e.preventDefault();
                     
-                    const code = document.querySelector('input[name="code"]') ? 
-                                 document.querySelector('input[name="code"]').value : '';
-                    
-                    if (!code) {
-                        alert('Erreur: code manquant');
-                        return;
-                    }
-                    
-                    // Préparer les données
+                    // Préparer les données (sans code, il vient de la session)
                     const formData = new FormData();
-                    formData.append('code', code);
                     
                     try {
                         const response = await fetch('php/reset-rsvp.php', {
@@ -356,6 +488,15 @@ if (!$code || !$familyData) {
                     } catch (error) {
                         alert('Erreur lors de l\'envoi: ' + error.message);
                     }
+                });
+            }
+
+            // Gérer le lien de rechargement manuel
+            const manualReload = document.getElementById('manual-reload');
+            if (manualReload) {
+                manualReload.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    window.location.reload();
                 });
             }
         });

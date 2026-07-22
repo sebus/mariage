@@ -69,120 +69,223 @@ Le site doit permettre de :
 
 ### Étape 1 - Préparer les données dans Baserow
 
-Une table Baserow doit contenir au minimum les informations nécessaires pour piloter les invitations et le suivi des réponses.
+✅ **COMPLÉTÉ**
 
-Champs pressentis :
+La table Baserow (ID 338) contient toutes les données nécessaires :
 
-- email principal ;
-- nom de famille ou libellé foyer ;
-- code famille unique ;
-- catégorie d'invitation ;
-- nombre de personnes attendues ou invitées ;
-- statut de réponse ;
-- date de dernière relance ;
-- préférences ou remarques de repas ;
-- présence par moment de la journée ;
-- besoins d'hébergement ;
-- chanson proposée ;
-- commentaires libres.
+- famille, email, code, catégorie, invites (JSON), confirmation, choix (multi-select), nuit (booléen), consignes, musique, dateConfirmation, etc.
 
-Sortie attendue : une structure stable, exploitable à la fois par le site, les scripts d'envoi et les automatisations.
-
-Point de vigilance : la structure exacte de la table doit être figée avant de coder l'intégration complète.
+Structure stable et exploitable.
 
 ### Étape 2 - Déclencher l'envoi initial des invitations
 
-Le flux démarre par une action manuelle. Un script ou une automation devra récupérer dans Baserow les données utiles de chaque invité, puis envoyer un email personnalisé.
+❌ **ANNULÉ**
 
-Données d'entrée :
-
-- email ;
-- famille ;
-- code ;
-- catégorie.
-
-Sortie attendue : chaque foyer reçoit un email unique contenant le bon lien vers le site.
-
-Décision actuelle : l'envoi initial reste déclenché manuellement pour garder le contrôle.
+Le QR code personnalisé sera imprimé dans le faire-part envoyé par voie postale.
+L'envoi d'invitations par email n'est pas nécessaire à ce stade.
 
 ### Étape 3 - Générer le lien personnalisé
 
-Chaque email doit contenir un lien vers le site avec un paramètre de type code famille.
+❌ **ANNULÉ**
 
-Exemple de logique attendue :
-
-- le lien contient un identifiant de foyer ;
-- le site lit ce code à l'ouverture ;
-- ce code permet de déterminer quels blocs du formulaire afficher et quelle ligne Baserow mettre à jour.
-
-Sortie attendue : un invité arrive sur une page déjà contextualisée pour son foyer.
+Remplacé par un QR code imprimé dans le faire-part (cf. Étape 2).
 
 ### Étape 4 - Identifier la famille sur le site
 
-Le front doit lire le paramètre dans l'URL puis initialiser l'expérience utilisateur à partir de ce code.
+✅ **COMPLÉTÉ**
 
-Ce point implique :
-
-- récupération du code dans l'URL ;
-- validation minimale du format ;
-- chargement des données liées à ce code ;
-- affichage d'un état d'erreur si le code est absent, invalide ou inconnu.
-
-État actuel : cette logique n'est pas encore implémentée dans [assets/js/main.js](assets/js/main.js).
+L'identification se fait par **recherche textuelle** sur prénom et nom (via [php/search-invite.php](php/search-invite.php)).
+Les sessions PHP stockent le code famille pour éviter l'exposition en URL.
+Gestion d'erreur en place en cas de code absent ou invalide.
 
 ### Étape 5 - Afficher un formulaire personnalisé
 
-Le formulaire RSVP ne doit pas être totalement générique. Il doit être capable de s'adapter en fonction de la catégorie de l'invité ou du foyer.
+✅ **COMPLÉTÉ**
 
-Exemples de personnalisation possibles :
+Le formulaire [rsvp.php](rsvp.php) est entièrement dynamique :
 
-- invités présents à toute la journée ;
-- invités présents seulement à certains moments ;
-- présence ou non d'enfants ;
-- blocs conditionnels sur le repas, le brunch ou l'hébergement.
-
-État actuel : un formulaire statique existe dans [index.html](index.html), mais il ne dépend pas encore des données Baserow.
+- Pré-remplissage des données depuis Baserow
+- Affichage conditionnel des invités avec leur statut (confirme/attente)
+- Choix des événements adaptés à la catégorie (full → Repas, simple → Vin d'honneur uniquement)
+- Pré-sélection des checkboxes et radio buttons depuis la base
+- Préservation des consignes et musique
+- **Champ commentaire optionnel** : textarea pour notes additionnelles (non enregistré en base, usage interne)
 
 ### Étape 6 - Enregistrer la réponse RSVP
 
-Quand l'invité valide le formulaire, le site doit transmettre les données au backend puis mettre à jour la ligne correspondante dans Baserow.
+✅ **COMPLÉTÉ**
 
-Le flux cible est :
+L'endpoint [php/save-details-rsvp.php](php/save-details-rsvp.php) gère le cycle complet :
 
-1. contrôle côté client ;
-2. envoi vers un endpoint PHP ;
-3. validation serveur ;
-4. appel API vers Baserow ;
-5. retour d'un statut clair au front.
-
-Sortie attendue : la ligne Baserow du foyer concerné est mise à jour de façon fiable et traçable.
-
-État actuel : [php/send-mail.php](php/send-mail.php) gère un envoi d'email générique et ne couvre pas encore ce besoin.
+- Validation serveur des données
+- Récupération du row ID via recherche Baserow
+- Mise à jour du JSON invites avec les nouveaux statuts (confirme/attente)
+- PATCH API vers Baserow avec tous les champs
+- Traçabilité complète dans [debug.log](debug.log)
 
 ### Étape 7 - Déclencher une notification
 
-Après une réponse réussie, une alerte doit être envoyée afin de suivre les confirmations en temps réel.
+✅ **COMPLÉTÉ**
 
-Cette alerte peut être déclenchée :
+Fonctionnalité entièrement implémentée avec templates personnalisés :
 
-- soit par le backend au moment du traitement ;
-- soit par une automation N8n déclenchée après mise à jour Baserow.
-
-Décision à prendre : choisir le point unique de responsabilité pour éviter des doublons d'email.
+- Fonction `prepareEmailContent()` charge les templates et remplace les variables
+- Fonction `sendRsvpNotification()` envoie deux emails distincts :
+  1. **À l'invité** : utilise le template [assets/template/notification_rsvp.html](assets/template/notification_rsvp.html)
+  2. **À mail_to** : utilise le template [assets/template/notification_copie.html](assets/template/notification_copie.html)
+- **Formatage des choix** : conversion en labels français
+  - `ceremonie` → **Cérémonie**
+  - `vinHonneur` → **Vin d'honneur**
+  - `repas` → **Repas et Soirée**
+- **Champ commentaire** : textarea ajouté au formulaire (après musique)
+  - Non enregistré en base de données (champ temporaire)
+  - Transmis dans les notifications pour lecture interne
+  - Apparaît ligne 4 de notification_copie.html pour suivi
+- Remplacements supportés : [famille], [email], [code], [choix], [invites], [nuit], [consignes], [musique], [commentaire]
+- Intégré dans [php/save-details-rsvp.php](php/save-details-rsvp.php) post-RSVP
+- Trace complète dans [debug.log](debug.log)
+- Utilise SMTP (boeuf.o2switch.net:465) avec timeout et gestion d'erreurs non-bloquante
 
 ### Étape 8 - Relancer les non-répondants
 
+⏸️ **À FAIRE**
+
 Une routine planifiée devra identifier les foyers sans réponse et leur renvoyer un message de relance.
 
-Cette étape devra préciser :
+Points à préciser :
 
-- la fréquence de contrôle ;
-- les critères de sélection ;
-- le contenu des relances ;
-- le nombre maximal de relances ;
-- la mise à jour des dates de relance dans Baserow.
+- fréquence de contrôle ;
+- critères de sélection ;
+- contenu des relances ;
+- nombre maximal de relances ;
+- mise à jour des dates de relance dans Baserow.
 
-Outil pressenti : N8n.
+Outil pressenti : N8n ou script PHP planifié.
+
+### Étape 9 - Support multilingue (Français/Italien)
+
+⏸️ **À FAIRE**
+
+Système d'internationalisation pour adapter l'interface et les emails selon la langue du navigateur.
+
+**Approche technique :**
+
+- Détection automatique de `Accept-Language` HTTP header côté serveur
+- Fallback sur français si langue non supportée
+- Deux jeux de templates :
+  - Interface [rsvp.php](rsvp.php) : labels, placeholders, messages
+  - Emails : [assets/template/notification_rsvp.html](assets/template/notification_rsvp.html) et [assets/template/notification_copie.html](assets/template/notification_copie.html)
+
+**Structure fichiers proposée :**
+
+```
+assets/i18n/
+├── fr.php (strings françaises)
+├── it.php (strings italiennes)
+assets/template/
+├── notification_rsvp_fr.html
+├── notification_rsvp_it.html
+├── notification_copie_fr.html
+├── notification_copie_it.html
+```
+
+**Traductions à prévoir :**
+
+1. Labels du formulaire : "Êtes-vous intéressé ?", "Indiquez le nombre", etc.
+2. Légendes des events : "Cérémonie", "Vin d'honneur", "Repas et Soirée"
+3. Messages de validation : "RSVP reçu", erreurs
+4. Contenu emails : sujets et corps
+5. Liens de modification : texte du CTA
+
+**Considérations :**
+
+- Stockage de la langue choisie en session après première détection
+- Possibilité d'override manuel via parameter `?lang=it`
+- Traçabilité de la langue dans [debug.log](debug.log)
+
+### Étape 10 - Design UI, Test et Recettage
+
+⏸️ **À FAIRE**
+
+Phase de finalisation et de validation de l'ensemble du système avant mise en production.
+
+**Aspects UI/UX :**
+
+- Refinement du design responsive (mobile, tablette, desktop)
+- Cohérence visuelle entre [index.html](index.html) et [rsvp.php](rsvp.php)
+- États visuels clairs : loading, success, error (popovers)
+- Accessibilité : contraste, labels explicites, navigation au clavier
+- Optimisation des animations et du temps de réponse
+- Branding et polish final
+
+**Testing :**
+
+1. **Fonctionnel** :
+   - Flux complet : recherche → RSVP → email → confirmation
+   - Pré-remplissage avec différentes catégories
+   - Mise à jour des invites JSON avec tous les scénarios
+   - Traitement des caractères accentués (français/italien)
+
+2. **Email** :
+   - Réception et rendu des deux templates (guest + internal)
+   - Remplacement correct de tous les placeholders
+   - Encodage UTF-8 respecté
+
+3. **Edge cases** :
+   - Code invalide ou expiré
+   - Double soumission
+   - Session expirée
+   - Erreur réseau avec retry
+   - Invites JSON malformé
+
+4. **Performance** :
+   - Temps de chargement du formulaire
+   - Temps de soumission/réponse API
+   - Charge serveur avec plusieurs soumissions
+
+5. **Sécurité** :
+   - Injection SQL (Baserow API sécurisée)
+   - XSS (htmlspecialchars utilisé)
+   - CSRF (session-based)
+   - Exposure du code famille
+
+**Recettage :**
+
+- ✅ Prise en compte des retours utilisateurs
+- ✅ Documentation utilisateur / FAQ
+- ✅ Migration données Baserow finalisée
+- ✅ Backups en place
+- ✅ Plan de rollback défini
+
+**Critères d'acceptation :**
+
+- Tous les formulaires soumettent correctement
+- Emails reçus et formatés correctement
+- Données synchronisées en temps réel sur Baserow
+- Aucune erreur JavaScript en console
+- Responsive design validé sur 3 appareils
+- Performance satisfaisante (<2s pour chaque action)
+
+## État général du projet
+
+| Étape                     | Statut      | Notes                             |
+| ------------------------- | ----------- | --------------------------------- |
+| 1. Données Baserow        | ✅ OK       | Structure figée et stable         |
+| 2. Envoi invitations      | ❌ Annulé   | QR code papier                    |
+| 3. Lien personnalisé      | ❌ Annulé   | Remplacé par QR code              |
+| 4. Identification         | ✅ OK       | Recherche prénom/nom + session    |
+| 5. Formulaire dynamique   | ✅ OK       | Pré-remplissage complet           |
+| 6. Enregistrement RSVP    | ✅ OK       | API Baserow avec traçabilité      |
+| 7. Notifications          | ✅ COMPLÉTÉ | SMTP configuré, phpmailer intégré |
+| 8. Relance non-répondants | ⏸️ À FAIRE  | Nécessite N8n ou cron             |
+| 9. Support multilingue    | ⏸️ À FAIRE  | FR/IT basé sur Accept-Language    |
+| 10. Design UI & Recettage | ⏸️ À FAIRE  | Polish final + tests complets     |
+
+## Points d'attention
+
+- **Logs** : tout est consigné dans [debug.log](debug.log) pour traçabilité complète
+- **Sécurité** : code famille stocké en session, jamais exposé en URL
+- **Baserow** : structure des champs multi-select bien comprise ({id, value, color})
 
 ## Architecture technique
 
@@ -461,6 +564,24 @@ Les points suivants restent à trancher :
 - [assets/js/main.js](assets/js/main.js) : logique front actuelle ;
 - [php/send-mail.php](php/send-mail.php) : backend email existant ;
 - [config/smtp.php](config/smtp.php) : configuration SMTP.
+
+## Démarrage du serveur local
+
+Pour tester le projet en local, utiliser la commande PHP suivante depuis la racine du projet :
+
+```bash
+php -S localhost:8000
+```
+
+Puis accéder à `http://localhost:8000` dans le navigateur.
+
+Alternative avec chemin explicite :
+
+```bash
+php -S localhost:8000 -t /run/media/seb_collet/SSD_500Go/mariage
+```
+
+Pour arrêter le serveur : `Ctrl+C`
 
 ## Point de reprise pour les prochaines sessions
 

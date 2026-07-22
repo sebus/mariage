@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+session_start();
+
 header('Content-Type: application/json; charset=utf-8');
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -28,8 +30,8 @@ try {
         $dotenv->load();
     }
 
-    // Récupérer les paramètres POST
-    $code = trim((string) ($_POST['code'] ?? ''));
+    // Récupérer le code depuis la session
+    $code = isset($_SESSION['family_code']) ? trim((string) $_SESSION['family_code']) : '';
 
     if ($code === '') {
         http_response_code(422);
