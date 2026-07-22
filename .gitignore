@@ -1,5 +1,0 @@
-.git
-.vscode
-vendor/
-.env
-config/smtp.php
