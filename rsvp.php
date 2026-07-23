@@ -69,6 +69,16 @@ if (!$code || !$familyData) {
     header('Location: index.php', true, 302);
     exit;
 }
+
+// Déterminer l'état de confirmation (INT: vide/null = pas de choix, 0 = Non, 1 = Oui)
+$confirmation = isset($familyData['confirmation']) ? $familyData['confirmation'] : null;
+
+// Convertir en int si c'est une valeur numérique
+if ($confirmation !== null && $confirmation !== '') {
+    $confirmation = (int)$confirmation;
+} else {
+    $confirmation = null;
+}
 ?>
 <!doctype html>
 
@@ -116,8 +126,8 @@ if (!$code || !$familyData) {
                         <nav class="site-nav" aria-label="Navigation principale">
                             <ul class="nav nav-inline">
                                 <!-- <li><a href="#programme">Programme de la journée </a></li> -->
-                                <li><a href="#rsvp">Confirmez votre venue !</a></li>
-                                <!-- <li><a href="#menu">Menu du samedi soir</a></li> -->
+                                <li><a href="#rsvp"><?php echo isset($confirmation) && $confirmation === 1 ? 'Revoir ma confirmation' : 'Confirmez votre venue !'; ?></a></li>
+                                <li><a href="#detail">Programme détaillé</a></li>
                                 <li><a href="#infos">Informations pratiques, adresses...</a></li>
                                 <li><a href="#contact">Contactez-nous !</a></li>
                                 <!-- <li><a href="#accueil">Photos</a></li> -->
@@ -159,23 +169,12 @@ if (!$code || !$familyData) {
             <div class="container">
                 <div class="row">
                     <div class="col">
-                        <h2>Confirmez votre venue !</h2>
+                        <h2><?php echo isset($confirmation) && $confirmation === 1 ? 'Revoir ma confirmation' : 'Confirmez votre venue !'; ?></h2>
                         <p>Réponse souhaitée avant le 15 janvier 2027</p>
                     </div>
                     <div class="row">
                         <div class="col">
                             <!-- Formulaire initial de confirmation (Oui/Non) -->
-                            <?php 
-                                // Déterminer l'état de confirmation (INT: vide/null = pas de choix, 0 = Non, 1 = Oui)
-                                $confirmation = isset($familyData['confirmation']) ? $familyData['confirmation'] : null;
-                                
-                                // Convertir en int si c'est une valeur numérique
-                                if ($confirmation !== null && $confirmation !== '') {
-                                    $confirmation = (int)$confirmation;
-                                } else {
-                                    $confirmation = null;
-                                }
-                            ?>
                             
                             <?php if ($confirmation === null): ?>
                             <form id="confirmation-form" name="confirmation">
@@ -317,7 +316,7 @@ if (!$code || !$familyData) {
                                     </label>
                                 </fieldset>
 
-                                <input type="submit" value="C'est tout bon ? Envoyez !" />
+                                <input type="submit" value="<?php echo isset($confirmation) && $confirmation === 1 ? 'Mettre à jour' : 'C\'est tout bon ? Envoyez !'; ?>" />
                                 <p>Astuce : vous pourrez modifier vos choix jusqu'au ...</p>
                             </form>
 
@@ -339,14 +338,14 @@ if (!$code || !$familyData) {
             </div>
         </section>
 
-        <!-- <section class="section" id="menu">
+        <section class="section" id="detail">
             <div class="container">
                 <div class="row">
                     <div class="col">
-                        <h2>Menu samedi soir</h2>
+                        <h2>Programme détaillé</h2>
                     </div>
                 </div>
-        </section> -->
+        </section>
 
         <section class="section" id="infos">
             <div class="container">

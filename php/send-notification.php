@@ -116,7 +116,7 @@ function sendRsvpNotification($familyData, $familyCode = '', $logFile = null) {
             
             $mail1->setFrom($smtpConfig['mail_from'], $smtpConfig['mail_from_name']);
             $mail1->addAddress($recipientEmail);
-            $mail1->isHTML(false);
+            $mail1->isHTML(true);
             $mail1->Subject = '✓ RSVP reçu : ' . ($familyData['famille'] ?? 'Famille');
             
             // Charger et préparer le contenu depuis le template
@@ -155,7 +155,7 @@ function sendRsvpNotification($familyData, $familyCode = '', $logFile = null) {
         
         $mail2->setFrom($smtpConfig['mail_from'], $smtpConfig['mail_from_name']);
         $mail2->addAddress($smtpConfig['mail_to']);
-        $mail2->isHTML(false);
+        $mail2->isHTML(true);
         $mail2->Subject = '[SUIVI] RSVP reçu : ' . ($familyData['famille'] ?? 'Famille');
         
         // Charger et préparer le contenu depuis le template

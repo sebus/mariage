@@ -203,6 +203,146 @@ assets/template/
 - Possibilité d'override manuel via parameter `?lang=it`
 - Traçabilité de la langue dans [debug.log](debug.log)
 
+### Étape 10 - Page de récapitulatif avec tableau
+
+⏳ **EN COURS**
+
+Création d'une page administrative d'accès restreint permettant de visualiser et piloter l'ensemble des réponses RSVP.
+
+**Accès sécurisé :**
+
+- Page accessible via URL protégée : [dashboard.php](dashboard.php)
+- Authentification par mot de passe configuré dans `.env` : variable `DASHBOARD_PASSWORD`
+- Vérification en session pour éviter les re-authentifications
+- Redirection vers formulaire de connexion si non authentifié
+- Timeout de session : 30 minutes d'inactivité
+
+**Structure du tableau :**
+
+| Colonne       | Type          | Source                                                 |
+| ------------- | ------------- | ------------------------------------------------------ |
+| Famille       | Texte         | Baserow - champ `famille`                              |
+| Email         | Email         | Baserow - champ `email` (cliquable mailto)             |
+| Confirmation  | Statut badge  | Baserow - champ `confirmation` (Oui/Non/En attente)    |
+| Personnes     | Nombre        | Comptage des invités avec statut 'confirme'            |
+| Cérémonie     | ✓/–           | Baserow - champ `choix` contient 'ceremonie'           |
+| Vin d'honneur | ✓/–           | Baserow - champ `choix` contient 'vinHonneur'          |
+| Repas         | ✓/–           | Baserow - champ `choix` contient 'repas'               |
+| Nuit          | Oui/Non       | Baserow - champ `nuit` (booléen)                       |
+| Date réponse  | Date formatée | Baserow - champ `dateConfirmation` (format JJ/MM/AAAA) |
+
+**Fonctionnalités implémentées :**
+
+1. **Authentification sécurisée** :
+   - Formulaire login avec saisie password
+   - Hash bcrypt stocké dans `.env` (jamais le plaintext)
+   - Génération du hash : `php -r "echo password_hash('votre_mdp', PASSWORD_BCRYPT);"`
+   - Endpoint [php/auth-dashboard.php](php/auth-dashboard.php) valide et crée la session
+
+2. **Recherche dynamique** :
+   - Champ de recherche textuelle sur la colonne "Famille"
+   - Filtrage en temps réel (côté client avec JavaScript)
+   - Insensible à la casse et aux accents (normalisation Unicode)
+   - Affichage "Aucun résultat" si aucune correspondance
+
+3. **Tableau récapitulatif** :
+   - Données chargées via [php/get-dashboard-data.php](php/get-dashboard-data.php)
+   - Pagination gérée côté API (100 résultats par page)
+   - Parsing intelligent du JSON `invites` et du multi-select `choix`
+   - Emails cliquables (mailto)
+   - Statuts avec badges colorés (vert = Oui, rouge = Non, jaune = Attente)
+   - Hover effect sur les lignes
+
+4. **Totaux récapitulatifs** (footer du tableau) :
+   - Nombre total de familles
+   - Nombre de réponses "Oui" / "Non" / "En attente"
+   - Nombre total de personnes confirmées
+   - Nombre de confirmations pour chaque événement (Cérémonie, Vin d'honneur, Repas)
+   - Nombre de demandes de nuit
+   - **Taux de réponse global** : (réponses Oui + Non) / total familles × 100%
+
+5. **Interface responsive** :
+   - Design avec Pico CSS
+   - Gradient header (violet)
+   - Grille flexible pour les totaux (auto-fit)
+   - Scroll horizontal pour le tableau sur mobile
+   - Fonts réduites en mode mobile
+
+6. **Traçabilité** :
+   - Accès authentifiés loggés dans [debug.log](debug.log)
+   - Événements : authentification réussie/échouée, chargement données
+   - Erreurs API capturées et loggées
+
+**Fichiers créés :**
+
+- [dashboard.php](dashboard.php) : page d'affichage avec formulaire login et tableau
+- [php/auth-dashboard.php](php/auth-dashboard.php) : endpoint d'authentification
+- [php/get-dashboard-data.php](php/get-dashboard-data.php) : endpoint de récupération des données
+- [assets/js/dashboard.js](assets/js/dashboard.js) : gestion du filtrage et de l'affichage
+
+**Variables d'environnement utilisées :**
+
+```
+DASHBOARD_PASSWORD="<hash bcrypt du mot de passe>"
+```
+
+**Utilisation :**
+
+1. Générer un hash sécurisé :
+
+   ```bash
+   php -r "echo password_hash('votre_mot_de_passe', PASSWORD_BCRYPT);"
+   ```
+
+2. Copier le hash dans [.env](.env) : `DASHBOARD_PASSWORD="<hash généré>"`
+
+3. Accéder à [dashboard.php](dashboard.php), saisir le mot de passe
+
+4. Tableau chargé avec données en temps réel depuis Baserow
+
+5. Refresh automatique toutes les 5 minutes
+
+### Étape 11 - Design UI, Test et Recettage
+
+⏸️ **À FAIRE**
+
+Système d'internationalisation pour adapter l'interface et les emails selon la langue du navigateur.
+
+**Approche technique :**
+
+- Détection automatique de `Accept-Language` HTTP header côté serveur
+- Fallback sur français si langue non supportée
+- Deux jeux de templates :
+  - Interface [rsvp.php](rsvp.php) : labels, placeholders, messages
+  - Emails : [assets/template/notification_rsvp.html](assets/template/notification_rsvp.html) et [assets/template/notification_copie.html](assets/template/notification_copie.html)
+
+**Structure fichiers proposée :**
+
+```
+assets/i18n/
+├── fr.php (strings françaises)
+├── it.php (strings italiennes)
+assets/template/
+├── notification_rsvp_fr.html
+├── notification_rsvp_it.html
+├── notification_copie_fr.html
+├── notification_copie_it.html
+```
+
+**Traductions à prévoir :**
+
+1. Labels du formulaire : "Êtes-vous intéressé ?", "Indiquez le nombre", etc.
+2. Légendes des events : "Cérémonie", "Vin d'honneur", "Repas et Soirée"
+3. Messages de validation : "RSVP reçu", erreurs
+4. Contenu emails : sujets et corps
+5. Liens de modification : texte du CTA
+
+**Considérations :**
+
+- Stockage de la langue choisie en session après première détection
+- Possibilité d'override manuel via parameter `?lang=it`
+- Traçabilité de la langue dans [debug.log](debug.log)
+
 ### Étape 10 - Design UI, Test et Recettage
 
 ⏸️ **À FAIRE**
@@ -279,7 +419,8 @@ Phase de finalisation et de validation de l'ensemble du système avant mise en p
 | 7. Notifications          | ✅ COMPLÉTÉ | SMTP configuré, phpmailer intégré |
 | 8. Relance non-répondants | ⏸️ À FAIRE  | Nécessite N8n ou cron             |
 | 9. Support multilingue    | ⏸️ À FAIRE  | FR/IT basé sur Accept-Language    |
-| 10. Design UI & Recettage | ⏸️ À FAIRE  | Polish final + tests complets     |
+| 10. Page récapitulatif    | ⏳ EN COURS | Tableau avec totaux + recherche   |
+| 11. Design UI & Recettage | ⏸️ À FAIRE  | Polish final + tests complets     |
 
 ## Points d'attention
 
@@ -593,3 +734,14 @@ Quand le travail reprendra, utiliser ce document dans l'ordre suivant :
 4. mettre à jour les questions ouvertes si une décision a été prise.
 
 Prochaine étape logique : figer précisément la structure de la table Baserow avant d'attaquer l'implémentation du formulaire dynamique et du backend RSVP.
+
+## Structure du JSON invité
+
+```json
+[
+  { "prenom": "Maria", "statut": "confirme" },
+  { "prenom": "Dino", "statut": "attente" },
+  { "prenom": "Lorenzo", "statut": "confirme" },
+  { "prenom": "Andrea", "statut": "confirme" }
+]
+```
